@@ -61,13 +61,14 @@ def loadReviewData(dataFile, attributes, businessIds=[]):
 	with open(os.path.join("..", "data", "Yelp", "yelp_dataset_challenge_round9", dataFile)) as data_file:
 		for line in data_file:
 			line_data = json.loads(line)
-			review_list = line_data['text'].lower().split()
-			matched_cuisine = [cuisine for cuisine in CUISINE_CATEGORIES if cuisine in review_list]
-			if len(matched_cuisine) > 0:
-				if line_data['business_id'] in temp.keys():
-					temp[line_data['business_id']] += matched_cuisine
-				else:
-					temp[line_data['business_id']] = matched_cuisine
+			if line_data['business_id'] in businessIds:
+				review_list = line_data['text'].lower().split()
+				matched_cuisine = [cuisine for cuisine in CUISINE_CATEGORIES if cuisine in review_list]
+				if len(matched_cuisine) > 0:
+					if line_data['business_id'] in temp.keys():
+						temp[line_data['business_id']] += matched_cuisine
+					else:
+						temp[line_data['business_id']] = matched_cuisine
 
 	for businessId in temp.keys():
 		temp[businessId] = max(set(temp[businessId]), key=temp[businessId].count)
