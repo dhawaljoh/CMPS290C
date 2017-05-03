@@ -53,11 +53,12 @@ def writeToFile2(dictionary):
 def loadReviewData(dataFile, attributes, businessIds=[]):
 	temp = {}
 	with open(os.path.join("..", "data", "Yelp", "yelp_dataset_challenge_round9", dataFile)) as data_file:
-		for line in data_file.read().split("\n")[:1000]:
+		for line in data_file:
 			line_data = json.loads(line)
-			for cuisine in CUISINE_CATEGORIES:
-				if cuisine in line_data:
-					temp[line_data['business_id']] = cuisine
+			review_list = line_data['text'].split()
+			matched_cuisine = [cuisine for cuisine in CUISINE_CATEGORIES if cuisine in review_list]
+			if len(matched_cuisine) > 0:
+				temp[line_data['business_id']] = matched_cuisine[0]
 
 	return temp
 
@@ -76,7 +77,7 @@ def main():
 
 	#/////////////TEST///////////////
 	# Restricting to 1000 businesses in interest of time
-	smallKeySet = data.keys()[:100]
+	smallKeySet = data.keys()[:1000]
 	crossProductBusinesses = crossProd(smallKeySet)
 	crossProductNeighborhoods = crossProd(list(set([data[key][0] for key in smallKeySet])))
 	crossProductCities = crossProd(list(set([data[key][1] for key in smallKeySet])))
