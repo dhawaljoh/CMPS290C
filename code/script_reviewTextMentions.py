@@ -50,15 +50,27 @@ def writeToFile2(dictionary):
 			if dictionary[business][2] != '':
 				out_file.write(business + "\t" + getUnicoded(dictionary[business][2]) + "\n")
 
+def writeToFile3(dictionary):
+	with open(os.path.join("..", "psl", "restaurantCuisine.txt"), 'w') as out_file:
+		for k,v in dictionary.iteritems():
+			out_file.write(k + "\t" + v + "\n")
+
+
 def loadReviewData(dataFile, attributes, businessIds=[]):
 	temp = {}
 	with open(os.path.join("..", "data", "Yelp", "yelp_dataset_challenge_round9", dataFile)) as data_file:
 		for line in data_file:
 			line_data = json.loads(line)
-			review_list = line_data['text'].split()
+			review_list = line_data['text'].lower().split()
 			matched_cuisine = [cuisine for cuisine in CUISINE_CATEGORIES if cuisine in review_list]
 			if len(matched_cuisine) > 0:
-				temp[line_data['business_id']] = matched_cuisine[0]
+				if line_data['business_id'] in temp.keys():
+					temp[line_data['business_id']] += matched_cuisine
+				else:
+					temp[line_data['business_id']] = matched_cuisine
+
+	for businessId in temp.keys():
+		temp[businessId] = max(set(temp[businessId]), key=temp[businessId].count)
 
 	return temp
 
@@ -87,11 +99,9 @@ def main():
 	writeToFile2(dict((k, data[k]) for k in smallKeySet))
 	#////////////////////////////////
 
-	#///////////////////load cuisine////////////
-	review_data = loadReviewData('yelp_academic_dataset_review.json', ['business_id', 'review_text'], smallKeySet)
-	print review_data
-	#///////////////////////////////////////////
 
+	review_data = loadReviewData('yelp_academic_dataset_review.json', ['business_id', 'review_text'], smallKeySet)
+	writeToFile3(review_data)
 
 
 if __name__ == '__main__':
