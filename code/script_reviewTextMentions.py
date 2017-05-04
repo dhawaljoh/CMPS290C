@@ -61,7 +61,7 @@ def loadReviewData(dataFile, attributes, businessIds=[]):
 	with open(os.path.join("..", "data", "Yelp", "yelp_dataset_challenge_round9", dataFile)) as data_file:
 		for line in data_file:
 			line_data = json.loads(line)
-			if line_data['business_id'] in businessIds:
+			if line_data['business_id'] in businessIds and 'cuisine' in line_data['text'].lower():
 				review_list = line_data['text'].lower().split()
 				matched_cuisine = [cuisine for cuisine in CUISINE_CATEGORIES if cuisine in review_list]
 				if len(matched_cuisine) > 0:
