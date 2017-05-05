@@ -5,8 +5,10 @@ import os
 import sys
 import unicodedata
 
-CUISINE_CATEGORIES = ['chinese', 'french', 'korean', 'turkish', 'asian', 'indian', 'vietnamese', 'thai', 'mediterrenean', \
-						'japanese', 'german', 'european', 'irish', 'southern', 'malaysian', 'carribean', 'french', 'mexican', 'greek', 'lebanese', 'spanish', 'british']
+CUISINE_CATEGORIES = ['chinese', 'french', 'korean', 'turkish', 'asian', 'indian', 'vietnamese', 'thai', 'mediterranean', \
+                        'japanese', 'german', 'european', 'irish', 'southern', 'malaysian', 'carribean', 'mexican', \
+                        'greek', 'lebanese', 'spanish', 'british', 'italian', 'cuban', 'american', 'brazilian', 'jamaican' \
+                        'palestinian', 'hawaiian', 'salvadorian', 'bosnian', 'pakistani']	
 
 def loadData(dataFile, attributes):
 	"""
