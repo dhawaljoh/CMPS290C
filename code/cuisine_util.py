@@ -138,7 +138,7 @@ def common_friends_with_cuisine(user_ids):
 
 def unique_users_cuisine_info():
 	review_file_name = "fav_cuisine_reviews.json"
-	review_file = os.path.join("..", "data", "Yelp", "yelp_dataset_challenge_round9", review_file_name)
+	review_file = os.path.join("..", "data", "Yelp", review_file_name)
 
 	user_ids = []
 	with open(review_file) as rf:
@@ -150,8 +150,24 @@ def unique_users_cuisine_info():
 
 	return (user_ids)
 
+def save_users_with_fav_cuisine(user_ids):
+    review_file_name = "fav_cuisine_reviews.json"
+    review_file = os.path.join("..", "data", "Yelp", "yelp_dataset_challenge_round9", review_file_name)
+
+    out_file = os.path.join("..", "data", "Yelp", "users_with_favorite_cuisine.json")
+    
+    with open(out_file, "w") as outFile:
+        with open(review_file, "r") as inFile:
+            for line in inFile:
+                data = json.loads(line)
+                if data["user_id"] in user_ids:
+                    json.dump(outFile, data)
+                    outFile.write("\n")
+
 user_ids = unique_users_cuisine_info()
-print len(user_ids)
-common_friends_with_cuisine(user_ids)
+print len(users_ids)
+save_users_with_fav_cuisine(user_ids)
+
+# common_friends_with_cuisine(user_ids)
 #user_without_friends()
 #user_with_cuisine_info()
