@@ -49,7 +49,7 @@ def restaurants_with_cuisine_info():
 	#print business_cuisine
 
 
-def user_with_cuisie_info():
+def user_with_cuisine_info():
 	review_file_name = "yelp_academic_dataset_review.json"
 	review_file = os.path.join("..", "data", "Yelp", "yelp_dataset_challenge_round9", review_file_name)
 
@@ -70,7 +70,76 @@ def user_with_cuisie_info():
 				else:
 					user_with_cuisine[review[u'user_id']] = 1
 
+	print users_with_fav_cuisine
 	print 'users with cuisine info: ', len(user_with_cuisine.keys())
 	print 'users with fav cuisine info: ', len(users_with_fav_cuisine.keys())
 
-user_with_cuisie_info()
+def user_without_friends(user_ids):
+	user_file_name = "yelp_academic_dataset_user.json"
+	user_file = "/soe/dhawal/projects/CMPS290C/data/Yelp/yelp_dataset_challenge_round9/" + user_file_name
+        #user_file = os.path.join("..", "data", "Yelp", "yelp_dataset_challenge_round9", user_file_name)
+
+	count = 0
+	with open(user_file, 'r') as uf:
+		for line in uf:
+			data = json.loads(line)
+			if data['user_id'] in user_ids:
+				friends = data['friends']
+				if 'None' in friends:
+					count += 1
+
+	print count		
+
+def common_friends_with_cuisine(user_ids):
+	user_file_name = "yelp_academic_dataset_user.json"
+        user_file = "/soe/dhawal/projects/CMPS290C/data/Yelp/yelp_dataset_challenge_round9/" + user_file_name
+        #user_file = os.path.join("..", "data", "Yelp", "yelp_dataset_challenge_round9", user_file_name)
+
+        friend_count_1 = 0
+	friend_count_2 = 0
+	friend_count_3 = 0
+	friend_count_more = 0
+	count = 0
+	common_friends_list = []
+	user_ids_set = set(user_ids)
+        with open(user_file, 'r') as uf:
+                for line in uf:
+                        data = json.loads(line)
+                        if data['user_id'] in user_ids:
+                                friends = data['friends']
+				common_friends = list(set(friends) & user_ids_set)
+				no_friends = len(common_friends)
+                                if no_friends > 0:
+					if no_friends == 1 : friend_count_1 += 1
+					elif no_friends == 2 : friend_count_2 += 1
+					elif no_friends == 3 : friend_count_3 += 1
+					else: friend_count_more += 1
+                                        count += 1
+					common_friends_list.append(common_friends)
+
+	print common_friends_list
+        print count
+	print 'friend_count_1', friend_count_1
+	print 'friend_count_2', friend_count_2
+	print 'friend_count_3', friend_count_3
+	print 'friend_count_more', friend_count_more
+
+
+def unique_users_cuisine_info():
+	review_file_name = "fav_cuisine_reviews.json"
+	review_file = os.path.join("..", "data", "Yelp", "yelp_dataset_challenge_round9", review_file_name)
+
+	user_ids = []
+	with open(review_file) as rf:
+		for line in rf:
+			data = json.loads(line)
+			user_id = data['user_id']
+			if user_id not in user_ids:
+				user_ids.append(user_id)
+
+	return (user_ids)
+
+user_ids = unique_users_cuisine_info()
+common_friends_with_cuisine(user_ids)
+#user_without_friends()
+#user_with_cuisine_info()
