@@ -90,6 +90,16 @@ def user_without_friends(user_ids):
 
 	print count		
 
+'''
+Output:
+Total frinds in cuisine network 6153
+friend_count_1 1645
+friend_count_2 880
+friend_count_3 527
+friend_count_more 3101
+max umber of friends:  715
+'''
+
 def common_friends_with_cuisine(user_ids):
 	user_file_name = "yelp_academic_dataset_user.json"
         user_file = "/soe/dhawal/projects/CMPS290C/data/Yelp/yelp_dataset_challenge_round9/" + user_file_name
@@ -113,16 +123,17 @@ def common_friends_with_cuisine(user_ids):
 					if no_friends == 1 : friend_count_1 += 1
 					elif no_friends == 2 : friend_count_2 += 1
 					elif no_friends == 3 : friend_count_3 += 1
-					else: friend_count_more += 1
+					else: 
+						friend_count_more += 1
                                         count += 1
 					common_friends_list.append(common_friends)
 
-	print common_friends_list
-        print count
+        print "friends in network", count
 	print 'friend_count_1', friend_count_1
 	print 'friend_count_2', friend_count_2
 	print 'friend_count_3', friend_count_3
 	print 'friend_count_more', friend_count_more
+	print 'max umber of friends: ', len(max(common_friends_list, key=len))
 
 
 def unique_users_cuisine_info():
@@ -140,6 +151,7 @@ def unique_users_cuisine_info():
 	return (user_ids)
 
 user_ids = unique_users_cuisine_info()
+print len(user_ids)
 common_friends_with_cuisine(user_ids)
 #user_without_friends()
 #user_with_cuisine_info()
