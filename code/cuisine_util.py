@@ -165,7 +165,7 @@ def save_users_with_fav_cuisine(user_ids):
                     outFile.write("\n")
 
 user_ids = unique_users_cuisine_info()
-print len(users_ids)
+print len(user_ids)
 save_users_with_fav_cuisine(user_ids)
 
 # common_friends_with_cuisine(user_ids)
