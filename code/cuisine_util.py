@@ -152,7 +152,7 @@ def unique_users_cuisine_info():
 
 def save_users_with_fav_cuisine(user_ids):
     review_file_name = "fav_cuisine_reviews.json"
-    review_file = os.path.join("..", "data", "Yelp", "yelp_dataset_challenge_round9", review_file_name)
+    review_file = os.path.join("..", "data", "Yelp", review_file_name)
 
     out_file = os.path.join("..", "data", "Yelp", "users_with_favorite_cuisine.json")
     
