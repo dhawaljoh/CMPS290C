@@ -161,12 +161,39 @@ def save_users_with_fav_cuisine(user_ids):
             for line in inFile:
                 data = json.loads(line)
                 if data["user_id"] in user_ids:
-                    json.dump(outFile, data)
+                    json.dump(data, outFile)
                     outFile.write("\n")
 
 user_ids = unique_users_cuisine_info()
 print len(user_ids)
 save_users_with_fav_cuisine(user_ids)
+
+def loadUserFriendList(user_ids):
+    user_file = "yelp_academic_dataset_user.json"
+    user_file = os.path.join("..", "data", "Yelp", "yelp_dataset_challenge_round9", user_file)
+    user_friends = {}
+
+    with open(user_file, "r") as inFile:
+        for line in inFile:
+            data = json.loads(line)
+            if data["user_id"] in user_ids:
+                user_friends[data["user_id"]] = data["friends"]                
+    
+    return user_friends
+
+def generate_User_FavCuisine_Friends(user_ids):
+    user_friends = loadUserFriendList(user_ids)
+    
+    with open(os.path.join("..", "data", "Yelp", "users_with_favorite_cuisine.json", "r")) as inFile:
+        for line in inFile:
+            data = json.loads(line)
+            cuisines = get_user_favorite_cuisine(data["text"])
+
+           
+
+
+
+
 
 # common_friends_with_cuisine(user_ids)
 #user_without_friends()
