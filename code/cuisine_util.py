@@ -75,8 +75,8 @@ def user_with_cuisine_info():
 
 def user_without_friends(user_ids):
 	user_file_name = "yelp_academic_dataset_user.json"
-	user_file = "/soe/dhawal/projects/CMPS290C/data/Yelp/yelp_dataset_challenge_round9/" + user_file_name
-        #user_file = os.path.join("..", "data", "Yelp", "yelp_dataset_challenge_round9", user_file_name)
+	#user_file = "/soe/dhawal/projects/CMPS290C/data/Yelp/yelp_dataset_challenge_round9/" + user_file_name
+        user_file = os.path.join("..", "data", "Yelp", "yelp_dataset_challenge_round9", user_file_name)
 
 	count = 0
 	with open(user_file, 'r') as uf:
@@ -101,8 +101,8 @@ max umber of friends:  715
 
 def common_friends_with_cuisine(user_ids):
 	user_file_name = "yelp_academic_dataset_user.json"
-        user_file = "/soe/dhawal/projects/CMPS290C/data/Yelp/yelp_dataset_challenge_round9/" + user_file_name
-        #user_file = os.path.join("..", "data", "Yelp", "yelp_dataset_challenge_round9", user_file_name)
+        #user_file = "/soe/dhawal/projects/CMPS290C/data/Yelp/yelp_dataset_challenge_round9/" + user_file_name
+        user_file = os.path.join("..", "data", "Yelp", "yelp_dataset_challenge_round9", user_file_name)
 
         friend_count_1 = 0
 	friend_count_2 = 0
@@ -165,8 +165,8 @@ def save_users_with_fav_cuisine(user_ids):
 
 def loadUserFriendList(user_ids):
     user_file_name = "yelp_academic_dataset_user.json"
-    #user_file = os.path.join("..", "data", "Yelp", "yelp_dataset_challenge_round9", user_file_name)
-    user_file = "/soe/dhawal/projects/CMPS290C/data/Yelp/yelp_dataset_challenge_round9/" + user_file_name
+    user_file = os.path.join("..", "data", "Yelp", "yelp_dataset_challenge_round9", user_file_name)
+    #user_file = "/soe/dhawal/projects/CMPS290C/data/Yelp/yelp_dataset_challenge_round9/" + user_file_name
     user_friends = {}
 
     with open(user_file, "r") as inFile:
@@ -183,9 +183,9 @@ def get_user_favorite_cuisine(review_text):
 	return fav_cuisine
 
 def generate_User_FavCuisine_Friends(user_ids):
-	user_file_name = "users_with_favorite_cuisine.json"
-	#user_file_path = os.path.join("..", "data", "Yelp", user_file)
-	user_file = "/soe/dhawal/projects/CMPS290C/data/Yelp/" + user_file_name
+	user_file_name = "fav_cuisine_reviews.json"
+	user_file_path = os.path.join("..", "data", "Yelp", user_file)
+	#user_file = "/soe/dhawal/projects/CMPS290C/data/Yelp/" + user_file_name
 
 	user_friends = loadUserFriendList(user_ids)
 
@@ -201,7 +201,8 @@ def generate_User_FavCuisine_Friends(user_ids):
 	
 	with open(os.path.join("..", "data", "Yelp", "user_cuisine_friends.txt"), "w") as outFile:
 		for user_id in user_friends.keys():
-			outFile.write(user_id + "\t" + str(user_cuisine[user_id]) + "\t" + str(user_friends[user_id]) + "\n")
+			if len(user_cuisine[user_id]) > 0 and 'None' not in user_friends[user_id]:
+				outFile.write(user_id + "\t" + str(user_cuisine[user_id]) + "\t" + str(user_friends[user_id]) + "\n")
 
 
 
