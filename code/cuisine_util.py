@@ -14,12 +14,15 @@ else:
     DATA_PATH = os.path.join("..", "data", "Yelp", "yelp_dataset_challenge_round9")
 
 YELP_PATH = os.path.join("..", "data", "Yelp")
+PSL_PATH = os.path.join("..", "psl", "data")
 
 REVIEWS_FILE = os.path.join(DATA_PATH, "yelp_academic_dataset_review.json")
 USERS_FILE = os.path.join(DATA_PATH, "yelp_academic_dataset_user.json")
 FAVORITE_CUISINE_REVIEWS = os.path.join(YELP_PATH, "fav_cuisine_reviews.json")
-USER_CUISINES_FRIENDS = os.path.join(YELP_PATH, "user_cuisine_friends.txt")
 
+PSL_FRIENDS_FILE = os.path.join(PSL_PATH, "friends.txt")
+PSL_CUISINE_FILE = os.path.join(PSL_PATH, "cuisine.txt")
+PSL_USER_CUISINE_FILE = os.path.join(PSL_PATH, "target.txt")
 
 def common_friends_with_cuisine(user_ids):
     """
@@ -71,7 +74,7 @@ def unique_users_cuisine_info():
 
     return (user_ids)
 
-def load_user_friend_list(user_ids):
+def load_user_friends_list(user_ids):
     """
     Input: list of unique users with favorite cuisine
     Returns: dictionary[userID] = [friend list]
@@ -95,14 +98,13 @@ def get_user_favorite_cuisine(review_text):
     fav_cuisine = list(set(CUISINE_CATEGORIES) & set(review_list))
     return fav_cuisine
 
-def generate_user_cuisines_friends(user_ids):
+def load_user_cuisine_list(user_ids):
     """
     Input: list of unique users with favorite cuisine
-    Output: creates a file with structure user  [list_of_cuisines]    [friends_list]
+    Output: dictionary[userID] = [cuisine list]
     """
-    user_friends = load_user_friend_list(user_ids)
-
     user_cuisine = {}
+    
     with open(FAVORITE_CUISINE_REVIEWS, "r") as inFile:
         for line in inFile:
             data = json.loads(line)
@@ -112,15 +114,39 @@ def generate_user_cuisines_friends(user_ids):
             else:
                 user_cuisine[data["user_id"]] = cuisines
     
-    with open(USER_CUISINES_FRIENDS, "w") as outFile:
-        for user_id in user_friends.keys():
-            if len(user_cuisine[user_id]) > 0 and 'None' not in user_friends[user_id]:
-                outFile.write(user_id + "\t" + str(user_cuisine[user_id]) + "\t" + str(user_friends[user_id]) + "\n")
+    return user_cuisine
+
+def write_in_file(file_name, dictionary):
+    """
+    Input: filename and a dictionary
+    Output: generates file with all key and values
+    """
+    with open(file_name, "w") as out_file:
+        for key, values in dictionary.iteritems():
+            for val in values:
+                out_file.write(key + "\t" + val + "\n")
+
+def write_PSL_data_files(user_ids):
+    """
+    Input: list of unique users with favorite cuisine
+    Output: data files for PSl
+    """
+    user_friends = load_user_friends_list(user_ids)
+    user_cuisine = load_user_cuisine_list(user_ids)
+    
+    write_in_file(PSL_FRIENDS_FILE, user_friends) 
+    write_in_file(PSL_CUISINE_FILE, user_cuisine)
+
+    #write target file
+    with open(PSL_USER_CUISINE_FILE, "w") as target_file:
+        for user in user_ids:
+            for cuisine in CUISINE_CATEGORIES: 
+                target_file.write(user + "\t" + cuisine + "\n")
 
 def main():
     user_ids = unique_users_cuisine_info()
     print len(user_ids)
-    generate_user_cuisines_friends(user_ids)
+    write_PSL_data_files(user_ids)
     #save_users_with_fav_cuisine(user_ids)
     # common_friends_with_cuisine(user_ids)
 
