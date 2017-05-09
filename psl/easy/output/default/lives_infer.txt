@@ -1,4 +1,0 @@
---- Atoms: 
-LIVES(Steve, Maryland) Truth=[0.91]
-LIVES(Alex, Maryland) Truth=[0.91]
-# Atoms: 2
