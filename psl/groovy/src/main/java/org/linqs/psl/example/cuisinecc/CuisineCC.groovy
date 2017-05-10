@@ -146,7 +146,7 @@ public class CuisineCC {
 		log.info("Loading data into database");
 
 		Inserter inserter = ds.getInserter(Friend, obsPartition);
-		InserterUtils.loadDelimitedData(inserter, Paths.get(config.dataPath, "Friends.txt").toString());
+		InserterUtils.loadDelimitedData(inserter, Paths.get(config.dataPath, "friends.txt").toString());
 
 		inserter = ds.getInserter(favoriteCuisine, obsPartition);
 		InserterUtils.loadDelimitedData(inserter, Paths.get(config.dataPath, "cuisine.txt").toString());
