@@ -84,7 +84,7 @@ def load_user_friends_list(user_ids):
     with open(USERS_FILE, "r") as inFile:
         for line in inFile:
             data = json.loads(line)
-            if data["user_id"] in user_ids:
+            if data["user_id"] in user_ids and "None" not in data["friends"]:
                 user_friends[data["user_id"]] = data["friends"]
     
     return user_friends
