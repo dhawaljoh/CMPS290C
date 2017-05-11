@@ -1,7 +1,7 @@
 import json
 import os
 
-VARSHA = 0
+VARSHA = 1
 
 CUISINE_CATEGORIES = ['chinese', 'french', 'korean', 'turkish', 'asian', 'indian', 'vietnamese', 'thai', 'mediterranean', \
             'japanese', 'german', 'european', 'irish', 'southern', 'malaysian', 'carribean', 'mexican', \
@@ -137,10 +137,12 @@ def write_PSL_data_files(user_ids):
     write_in_file(PSL_FRIENDS_FILE, user_friends) 
     write_in_file(PSL_CUISINE_FILE, user_cuisine)
 
-    #write target file
+	# Unioin of users in user_friends and user_cuisine
+    target_users = list(set(user_friends.keys()) | set(user_cuisine.keys()))
+    # write target file
     with open(PSL_USER_CUISINE_FILE, "w") as target_file:
-        for user in user_ids:
-            for cuisine in CUISINE_CATEGORIES: 
+        for user in target_users:
+            for cuisine in CUISINE_CATEGORIES:
                 target_file.write(user + "\t" + cuisine + "\n")
 
 def main():
