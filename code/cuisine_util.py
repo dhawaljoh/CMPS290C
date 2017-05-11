@@ -123,7 +123,7 @@ def write_in_file(file_name, dictionary):
     """
     with open(file_name, "w") as out_file:
         for key, values in dictionary.iteritems():
-            for val in values:
+            for val in list(set(values)): # to prevent the case if an user has mentioned the same cuisine twice
                 out_file.write(key + "\t" + val + "\n")
 
 def write_PSL_data_files(user_ids):
