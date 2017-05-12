@@ -137,8 +137,14 @@ def write_PSL_data_files(user_ids):
     write_in_file(PSL_FRIENDS_FILE, user_friends) 
     write_in_file(PSL_CUISINE_FILE, user_cuisine)
 
-	# Unioin of users in user_friends and user_cuisine
-    target_users = list(set(user_friends.keys()) | set(user_cuisine.keys()))
+    # Extract friends network from user_friends
+    user_network = [x for x in user_friends.values()]
+    all_people = []
+    for friend_nw in user_network:
+        all_people += friend_nw
+
+	# Unioin of users in user_friends network and user_cuisine - Some people appear in friend lists but not in the dataset
+    target_users = list(set(user_friends.keys()) | set(user_cuisine.keys()) | set(all_people))
     # write target file
     with open(PSL_USER_CUISINE_FILE, "w") as target_file:
         for user in target_users:
