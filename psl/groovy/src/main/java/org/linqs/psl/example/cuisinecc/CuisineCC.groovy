@@ -183,7 +183,7 @@ public class CuisineCC {
 		Database resultsDB = ds.getDatabase(targetsPartition);
 		PrintStream ps = new PrintStream(new File(Paths.get(config.outputPath, "favoriteCuisine.txt").toString()));
 		AtomPrintStream aps = new DefaultAtomPrintStream(ps);
-		Set atomSet = Queries.getAllAtoms(resultsDB, Lives);
+		Set atomSet = Queries.getAllAtoms(resultsDB, favoriteCuisine);
 		for (Atom a : atomSet) {
 			aps.printAtom(a);
 		}
