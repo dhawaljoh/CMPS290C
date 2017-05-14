@@ -5,7 +5,7 @@ VARSHA = 1
 
 CUISINE_CATEGORIES = ['chinese', 'french', 'korean', 'turkish', 'asian', 'indian', 'vietnamese', 'thai', 'mediterranean', \
             'japanese', 'german', 'european', 'irish', 'southern', 'malaysian', 'carribean', 'mexican', \
-            'greek', 'lebanese', 'spanish', 'british', 'italian', 'cuban', 'american', 'brazilian', 'jamaican' \
+            'greek', 'lebanese', 'spanish', 'british', 'italian', 'cuban', 'american', 'brazilian', 'jamaican', \
             'palestinian', 'hawaiian', 'salvadorian', 'bosnian', 'pakistani']
 
 if VARSHA == 1:
