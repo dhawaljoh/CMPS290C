@@ -109,11 +109,12 @@ def load_user_cuisine_list(user_ids):
         for line in inFile:
             data = json.loads(line)
             cuisines = get_user_favorite_cuisine(data["text"])
-            if data["user_id"] in user_cuisine.keys():
-                user_cuisine[data["user_id"]] += cuisines
-            else:
-                user_cuisine[data["user_id"]] = cuisines
-    
+            if data["user_id"] in user_ids: #added to control number of users
+		    if data["user_id"] in user_cuisine.keys():
+			user_cuisine[data["user_id"]] += cuisines
+		    else:
+			user_cuisine[data["user_id"]] = cuisines
+	    
     return user_cuisine
 
 def write_in_file(file_name, dictionary):
@@ -126,14 +127,15 @@ def write_in_file(file_name, dictionary):
             for val in list(set(values)): # to prevent the case if an user has mentioned the same cuisine twice
                 out_file.write(key + "\t" + val + "\n")
 
-def write_PSL_data_files(user_ids):
+def write_PSL_data_files(orig_user_ids, no_users):
     """
-    Input: list of unique users with favorite cuisine
+    Input: list of unique users with favorite cuisine, and a count of users to be loaded in file
     Output: data files for PSl
     """
+    user_ids = orig_user_ids[:no_users]
     user_friends = load_user_friends_list(user_ids)
     user_cuisine = load_user_cuisine_list(user_ids)
-    
+    print user_friends 
     write_in_file(PSL_FRIENDS_FILE, user_friends) 
     write_in_file(PSL_CUISINE_FILE, user_cuisine)
 
@@ -154,7 +156,8 @@ def write_PSL_data_files(user_ids):
 def main():
     user_ids = unique_users_cuisine_info()
     print len(user_ids)
-    write_PSL_data_files(user_ids)
+    write_PSL_data_files(user_ids, 10)
+    #write_PSL_data_files(user_ids, len(user_ids))
     #save_users_with_fav_cuisine(user_ids)
     # common_friends_with_cuisine(user_ids)
 
