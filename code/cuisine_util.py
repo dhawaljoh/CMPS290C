@@ -151,12 +151,55 @@ def write_PSL_data_files(orig_user_ids, no_users):
     with open(PSL_USER_CUISINE_FILE, "w") as target_file:
         for user in target_users:
             for cuisine in CUISINE_CATEGORIES:
-                target_file.write(user + "\t" + cuisine + "\n")
+                target_file.write(user + "\t" + cuisine + "\n")	
+
+def write_data_subset_files(user_ids):
+	#Get users from outside the network linked to the network
+	no_users = 10
+	i = 1
+	min_friends_in_network = 30
+	user_friends = {}
+	users_with_cuisine = []
+	with open(USERS_FILE, "r") as inFile:
+		for line in inFile:
+			if i > no_users:
+				break
+			data = json.loads(line)
+			if data['user_id'] not in user_ids:
+				friends_in_nw = list(set(user_ids) & set(data['friends']))
+				if len(friends_in_nw) > 100:
+					friends_in_nw = friends_in_nw[:100]
+					user_friends[data['user_id']] = friends_in_nw
+					i += 1
+					users_with_cuisine += friends_in_nw
+					print i, user_friends[data['user_id']]
+
+	print "Done getting users"
+	#remove duplicates from users_with_cuisine
+	users_with_cuisine = list(set(users_with_cuisine))
+	user_cuisine = load_user_cuisine_list(users_with_cuisine)
+
+	write_in_file(PSL_FRIENDS_FILE, user_friends)
+	write_in_file(PSL_CUISINE_FILE, user_cuisine)
+	
+	print "Wrote friends and cuisine files"
+	all_people = users_with_cuisine
+
+	target_users = list(set(user_friends.keys()) | set(user_cuisine.keys()) | set(all_people))
+	# write target file
+	with open(PSL_USER_CUISINE_FILE, "w") as target_file:
+		for user in target_users:
+			for cuisine in CUISINE_CATEGORIES:
+				target_file.write(user + "\t" + cuisine + "\n")
+
+
+	
 
 def main():
     user_ids = unique_users_cuisine_info()
     print len(user_ids)
-    write_PSL_data_files(user_ids, 10)
+    write_data_subset_files(user_ids)
+    #write_PSL_data_files(user_ids, 10)
     #write_PSL_data_files(user_ids, len(user_ids))
     #save_users_with_fav_cuisine(user_ids)
     # common_friends_with_cuisine(user_ids)
