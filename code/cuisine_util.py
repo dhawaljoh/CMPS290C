@@ -22,8 +22,8 @@ FAVORITE_CUISINE_REVIEWS = os.path.join(YELP_PATH, "fav_cuisine_reviews.json")
 
 PSL_FRIENDS_FILE = os.path.join(PSL_PATH, "friends.txt")
 PSL_CUISINE_FILE = os.path.join(PSL_PATH, "cuisine.txt")
-TARGET_FILE = os.path.join(PSL_PATH, "target.txt")
-
+PSL_TARGET_FILE = os.path.join(PSL_PATH, "target.txt")
+PSL_TRUTH_FILE = os.path.join(PSL_PATH, "truth.txt")
 def common_friends_with_cuisine(user_ids):
     """
     Input: list of unique users with favourite cuisine
@@ -74,7 +74,7 @@ def unique_users_cuisine_info():
 
     return (user_ids)
 
-def load_user_friends_list(user_ids):
+def load_user_friends_list(user_ids, within_cuisine_network=False):
     """
     Input: list of unique users with favorite cuisine
     Returns: dictionary[userID] = [friend list]
@@ -84,7 +84,10 @@ def load_user_friends_list(user_ids):
     with open(USERS_FILE, "r") as inFile:
         for line in inFile:
             data = json.loads(line)
-            if data["user_id"] in user_ids and "None" not in data["friends"]:
+            friends = data["friends"]
+            if within_cuisine_network:
+                friends = list(set(friends) & set(user_ids))
+            if data["user_id"] in user_ids and "None" not in friends and len(friends) > 0:
                 user_friends[data["user_id"]] = data["friends"]
     
     return user_friends
@@ -148,12 +151,12 @@ def write_PSL_data_files(orig_user_ids, no_users):
     target_users = list(set(user_friends.keys()) | set(user_cuisine.keys()) | set(all_people))
     
     # write target file
-    with open(TARGET_FILE, "w") as target_file:
+    with open(PSL_TARGET_FILE, "w") as target_file:
         for user in target_users:
             for cuisine in CUISINE_CATEGORIES:
 		if user in user_cuisine.keys():
-                    if cuisine not in user_cuisine[user]: # to remove observed entries from target file
-			target_file.write(user + "\t" + cuisine + "\n")
+            if cuisine not in user_cuisine[user]: # to remove observed entries from target file
+                target_file.write(user + "\t" + cuisine + "\n")
 		else:
 			target_file.write(user + "\t" + cuisine + "\n")	
 
@@ -191,19 +194,61 @@ def write_data_subset_files(user_ids):
 	target_users = list(set(user_friends.keys()) | set(user_cuisine.keys()) | set(all_people))
 	print 'Number of users', len(target_users)
 	# write target file
-	with open(TARGET_FILE, "w") as target_file:
+	with open(PSL_TARGET_FILE, "w") as target_file:
 		for user in target_users:
 			for cuisine in CUISINE_CATEGORIES:
 				if user in user_cuisine.keys():
-                                    if cuisine not in user_cuisine[user]:
+                    if cuisine not in user_cuisine[user]:
 				        target_file.write(user + "\t" + cuisine + "\n")
 				else:
 					target_file.write(user + "\t" + cuisine + "\n")
 
+# Function to write evaluation data
+def write_eval_data(user_ids, split_ratio, no_user=-1):
+    """
+    Input: User_ids with cuisine info and no of users to restrict size of data
+    Outputs: Writes data for PSL evaluation
+    """
+    if no_user == -1:
+        no_user = len(user_ids)
+
+    # Take only subset of user_ids
+    no_user = no_user[:no_user]
+    
+    user_friends = load_user_friends_list(user_ids, within_cuisine_network=True)
+    
+    split_point = len(user_ids) * split_ratio
+    
+    # sort users according to number of friends
+    sorted_user_ids = [k for k in sorted(user_friends, key=lambda k: len(user_friends[k]), reverse=True)]
+
+    labeled_user_ids = sorted_user_ids[:split_point]
+    unlabeled_user_ids = sorted_user_ids[split_point:]
+    
+    # get favorite cuisine info for labeled uers
+    user_cuisine_labeled = load_user_cuisine_list(labeled_user_ids)
+    user_cuisine_unlabeled = load_user_cuisine_list(unlabeled_user_ids)
+    
+    # all users with cuisine info
+    user_cuisine_all = {**user_cuisine_labeled, **user_cuisine_unlabeled}
+    
+    write_in_file(PSL_CUISINE_FILE, user_cuisine_labeled)
+    write_in_file(PSL_TRUTH_FILE, user_cuisine_unlabeld)
+    write_in_file(PSL_FRIENDS_FILE, user_friends)
+
+    # write target file
+
+    with open(PSL_TARGET_FILE, 'w') as target_file:
+        for user in user_ids:
+            for cuisine in CUISINE_CATEGORIES:
+                if cuisine not in user_cuisine_all[user]:
+                    target_file.write(user + '\t' + cuisine + '\n') 
+
+
 def main():
     user_ids = unique_users_cuisine_info()
     print len(user_ids)
-    write_PSL_data_files(user_ids, 100)
+    write_eval_data(user_ids, 0.8, 100)
 
     # write_data_subset_files(user_ids)
     # write_PSL_data_files(user_ids, 100)
