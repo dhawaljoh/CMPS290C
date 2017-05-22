@@ -222,19 +222,18 @@ def write_eval_data(user_ids, split_ratio, no_user=-1):
     # sort users according to number of friends
     sorted_user_ids = [k for k in sorted(user_friends, key=lambda k: len(user_friends[k]), reverse=True)]
 
-    labeled_user_ids = sorted_user_ids[:split_point]
-    unlabeled_user_ids = sorted_user_ids[split_point:]
+    user_ids_labeled = sorted_user_ids[:split_point]
+    user_ids_unlabeled = sorted_user_ids[split_point:]
     
     # get favorite cuisine info for labeled uers
-    user_cuisine_labeled = load_user_cuisine_list(labeled_user_ids)
-    user_cuisine_unlabeled = load_user_cuisine_list(unlabeled_user_ids)
-    
-    # all users with cuisine info
-    user_cuisine_all = user_cuisine_labeled.copy()
-    user_cuisine_all.update(user_cuisine_unlabeled)
-    
+    user_cuisine_labeled = load_user_cuisine_list(user_ids_labeled)
+    user_cuisine_unlabeled = load_user_cuisine_list(user_ids_unlabeled)
+
+    print "user_cuisine_labeled", user_cuisine_labeled
+    print "user_cuisine_unlabeled", user_cuisine_unlabeled
+ 
     write_in_file(PSL_CUISINE_FILE, user_cuisine_labeled)
-    write_in_file(PSL_TRUTH_FILE, user_cuisine_unlabeld)
+    write_in_file(PSL_TRUTH_FILE, user_cuisine_unlabeled)
     write_in_file(PSL_FRIENDS_FILE, user_friends)
 
     # write target file
@@ -242,14 +241,17 @@ def write_eval_data(user_ids, split_ratio, no_user=-1):
     with open(PSL_TARGET_FILE, 'w') as target_file:
         for user in user_ids:
             for cuisine in CUISINE_CATEGORIES:
-                if cuisine not in user_cuisine_all[user]:
-                    target_file.write(user + '\t' + cuisine + '\n') 
+                if user in user_cuisine_labeled.keys():
+                    if cuisine not in user_cuisine_labeled[user]:
+                        target_file.write(user + '\t' + cuisine + '\n')
+                else:
+                    target_file.write(user + '\t' + cuisine + '\n')
 
 
 def main():
     user_ids = unique_users_cuisine_info()
     print len(user_ids)
-    write_eval_data(user_ids, 0.8, 300)
+    write_eval_data(user_ids, 0.8)
 
     # write_data_subset_files(user_ids)
     # write_PSL_data_files(user_ids, 100)
