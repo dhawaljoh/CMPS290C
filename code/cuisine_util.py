@@ -15,6 +15,7 @@ else:
     DATA_PATH = os.path.join("..", "data", "Yelp", "yelp_dataset_challenge_round9")
 
 YELP_PATH = os.path.join("..", "data", "Yelp")
+# Creating dummy data folder
 PSL_PATH = os.path.join("..", "psl", "data")
 
 REVIEWS_FILE = os.path.join(DATA_PATH, "yelp_academic_dataset_review.json")
@@ -84,7 +85,7 @@ def unique_users_cuisine_info():
 def load_user_friends_list(user_ids, within_cuisine_network=False):
     """
     Input: list of unique users with favorite cuisine
-    Returns: dictionary[userID] = [friend list]
+    Returns: dictionary[userID] = [friend list], if within_cuisine_network is set, only friends in network
     """
     user_friends = {}
 
@@ -94,8 +95,9 @@ def load_user_friends_list(user_ids, within_cuisine_network=False):
             friends = data["friends"]
             if within_cuisine_network:
                 friends = list(set(friends) & set(user_ids))
+            else:
             if data["user_id"] in user_ids and "None" not in friends and len(friends) > 0:
-                user_friends[data["user_id"]] = data["friends"]
+                user_friends[data["user_id"]] = friends
     
     return user_friends
 
@@ -168,7 +170,7 @@ def write_PSL_data_files(orig_user_ids, no_users):
                     target_file.write(user + "\t" + cuisine + "\n")	
 
 def write_data_subset_files(user_ids):
-    # Get users from outside the network linked to the network
+    # get users from outside the network linked to the network
     no_users = 10
     i = 1
     min_friends_in_network = 30
@@ -188,7 +190,7 @@ def write_data_subset_files(user_ids):
                     users_with_cuisine += friends_in_nw
 
     print "Done getting users"
-    #remove duplicates from users_with_cuisine
+    # remove duplicates from users_with_cuisine
     users_with_cuisine = list(set(users_with_cuisine))
     user_cuisine = load_user_cuisine_list(users_with_cuisine)
 
@@ -219,11 +221,12 @@ def write_eval_data(user_ids, split_ratio, no_user=-1):
     if no_user == -1:
         no_user = len(user_ids)
 
-    # Take only subset of user_ids
+    # take only subset of user_ids
     user_ids = user_ids[:no_user]
     
     user_friends = load_user_friends_list(user_ids, within_cuisine_network=True)
-    
+   
+    # users with at least one friend 
     user_ids = user_friends.keys()
     
     split_point = int(len(user_ids) * split_ratio)
@@ -231,25 +234,19 @@ def write_eval_data(user_ids, split_ratio, no_user=-1):
     # sort users according to number of friends
     sorted_user_ids = [k for k in sorted(user_friends, key=lambda k: len(user_friends[k]), reverse=True)]
 
+    # take friends with maximum users as labeled
     user_ids_labeled = sorted_user_ids[:split_point]
     user_ids_unlabeled = sorted_user_ids[split_point:]
     
-    print "user_ids_labeled", user_ids_labeled
-    print "user_ids_unlabeled", user_ids_unlabeled
-
     # get favorite cuisine info for labeled uers
     user_cuisine_labeled = load_user_cuisine_list(user_ids_labeled)
     user_cuisine_unlabeled = load_user_cuisine_list(user_ids_unlabeled)
 
-    print "user_cuisine_labeled", user_cuisine_labeled
-    print "user_cuisine_unlabeled", user_cuisine_unlabeled
- 
     write_in_file(PSL_CUISINE_FILE, user_cuisine_labeled)
     write_in_file(PSL_TRUTH_FILE, user_cuisine_unlabeled)
     write_in_file(PSL_FRIENDS_FILE, user_friends)
 
     # write target file
-
     with open(PSL_TARGET_FILE, 'w') as target_file:
         for user in user_ids:
             for cuisine in CUISINE_CATEGORIES:
@@ -263,7 +260,7 @@ def write_eval_data(user_ids, split_ratio, no_user=-1):
 def main():
     user_ids = unique_users_cuisine_info()
     print len(user_ids)
-    write_eval_data(user_ids, 0.8)
+    write_eval_data(user_ids, 0.8, 500)
 
     # write_data_subset_files(user_ids)
     # write_PSL_data_files(user_ids, 100)
