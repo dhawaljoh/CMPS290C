@@ -1,5 +1,6 @@
 import json
 import os
+import pickle
 
 VARSHA = 1
 
@@ -19,6 +20,7 @@ PSL_PATH = os.path.join("..", "psl", "data")
 REVIEWS_FILE = os.path.join(DATA_PATH, "yelp_academic_dataset_review.json")
 USERS_FILE = os.path.join(DATA_PATH, "yelp_academic_dataset_user.json")
 FAVORITE_CUISINE_REVIEWS = os.path.join(YELP_PATH, "fav_cuisine_reviews.json")
+USER_IDS_WITH_CUISINE = os.path.join(YELP_PATH, "user_ids_with_cuisine_friends")
 
 PSL_FRIENDS_FILE = os.path.join(PSL_PATH, "friends.txt")
 PSL_CUISINE_FILE = os.path.join(PSL_PATH, "cuisine.txt")
@@ -62,15 +64,20 @@ def common_friends_with_cuisine(user_ids):
 
 def unique_users_cuisine_info():
     """
-    Returns: Unique user_ids with favourite cuisines
+    Returns: Unique user_ids with favourite cuisines and at least 1 friend
     """
-    user_ids = []
-    with open(FAVORITE_CUISINE_REVIEWS) as rf:
-        for line in rf:
-            data = json.loads(line)
-            user_id = data['user_id']
-            if user_id not in user_ids:
-                user_ids.append(user_id)
+    
+    if os.path.isfile(USER_IDS_WITH_CUISINE):
+        user_ids = pickle.load(open(USER_IDS_WITH_CUISINE))
+    else:
+        user_ids = []
+        with open(FAVORITE_CUISINE_REVIEWS) as rf:
+            for line in rf:
+                data = json.loads(line)
+                user_id = data['user_id']
+                if user_id not in user_ids:
+                    user_ids.append(user_id)
+        pickle.dump(user_ids, open(USER_IDS_WITH_CUISINE, 'w'))    
 
     return (user_ids)
 
@@ -213,9 +220,11 @@ def write_eval_data(user_ids, split_ratio, no_user=-1):
         no_user = len(user_ids)
 
     # Take only subset of user_ids
-    no_user = user_ids[:no_user]
+    user_ids = user_ids[:no_user]
     
     user_friends = load_user_friends_list(user_ids, within_cuisine_network=True)
+    
+    user_ids = user_friends.keys()
     
     split_point = int(len(user_ids) * split_ratio)
     
@@ -225,6 +234,9 @@ def write_eval_data(user_ids, split_ratio, no_user=-1):
     user_ids_labeled = sorted_user_ids[:split_point]
     user_ids_unlabeled = sorted_user_ids[split_point:]
     
+    print "user_ids_labeled", user_ids_labeled
+    print "user_ids_unlabeled", user_ids_unlabeled
+
     # get favorite cuisine info for labeled uers
     user_cuisine_labeled = load_user_cuisine_list(user_ids_labeled)
     user_cuisine_unlabeled = load_user_cuisine_list(user_ids_unlabeled)
