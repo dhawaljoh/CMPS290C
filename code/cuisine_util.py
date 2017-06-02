@@ -24,6 +24,7 @@ FAVORITE_CUISINE_REVIEWS = os.path.join(YELP_PATH, "fav_cuisine_reviews.json")
 USER_IDS_WITH_CUISINE = os.path.join(YELP_PATH, "user_ids_with_cuisine_friends")
 
 PSL_FRIENDS_FILE = os.path.join(PSL_PATH, "friends.txt")
+PSL_USER_USEFUL_FILE = os.path.join(PSL_PATH, "useful.txt")
 PSL_CUISINE_FILE = os.path.join(PSL_PATH, "cuisine.txt")
 PSL_TARGET_FILE = os.path.join(PSL_PATH, "target.txt")
 PSL_TRUTH_FILE = os.path.join(PSL_PATH, "truth.txt")
@@ -60,7 +61,7 @@ def common_friends_with_cuisine(user_ids):
     print 'friend_count_2', friend_count_2
     print 'friend_count_3', friend_count_3
     print 'friend_count_more', friend_count_more
-    print 'max umber of friends: ', len(max(common_friends_list, key=len))
+    print 'max number of friends: ', len(max(common_friends_list, key=len))
 
 
 def unique_users_cuisine_info():
@@ -95,7 +96,6 @@ def load_user_friends_list(user_ids, within_cuisine_network=False):
             friends = data["friends"]
             if within_cuisine_network:
                 friends = list(set(friends) & set(user_ids))
-            else:
             if data["user_id"] in user_ids and "None" not in friends and len(friends) > 0:
                 user_friends[data["user_id"]] = friends
     
@@ -116,17 +116,17 @@ def load_user_cuisine_list(user_ids):
     Output: dictionary[userID] = [cuisine list]
     """
     user_cuisine = {}
-    
+
     with open(FAVORITE_CUISINE_REVIEWS, "r") as inFile:
         for line in inFile:
             data = json.loads(line)
             cuisines = get_user_favorite_cuisine(data["text"])
             if data["user_id"] in user_ids: #added to control number of users
-		    if data["user_id"] in user_cuisine.keys():
-			user_cuisine[data["user_id"]] += cuisines
-		    else:
-			user_cuisine[data["user_id"]] = cuisines
-	    
+                if data["user_id"] in user_cuisine.keys():
+                    user_cuisine[data["user_id"]] += cuisines
+            else:
+                user_cuisine[data["user_id"]] = cuisines
+        
     return user_cuisine
 
 def write_in_file(file_name, dictionary):
@@ -229,10 +229,13 @@ def write_eval_data(user_ids, split_ratio, no_user=-1):
     # users with at least one friend 
     user_ids = user_friends.keys()
     
+    user_useful = get_user_useful_votes(user_ids)
     split_point = int(len(user_ids) * split_ratio)
     
     # sort users according to number of friends
-    sorted_user_ids = [k for k in sorted(user_friends, key=lambda k: len(user_friends[k]), reverse=True)]
+    # sorted_user_ids = [k for k in sorted(user_friends, key=lambda k: len(user_friends[k]), reverse=True)]
+    # Changed sorting order to descending to capture influence of more friend
+    sorted_user_ids = [k for k in sorted(user_friends, key=lambda k: len(user_friends[k]))]
 
     # take friends with maximum users as labeled
     user_ids_labeled = sorted_user_ids[:split_point]
@@ -245,6 +248,7 @@ def write_eval_data(user_ids, split_ratio, no_user=-1):
     write_in_file(PSL_CUISINE_FILE, user_cuisine_labeled)
     write_in_file(PSL_TRUTH_FILE, user_cuisine_unlabeled)
     write_in_file(PSL_FRIENDS_FILE, user_friends)
+    write_in_file(PSL_USER_USEFUL_FILE, user_useful)
 
     # write target file
     with open(PSL_TARGET_FILE, 'w') as target_file:
@@ -256,13 +260,28 @@ def write_eval_data(user_ids, split_ratio, no_user=-1):
                 else:
                     target_file.write(user + '\t' + cuisine + '\n')
 
+def get_user_useful_votes(user_ids):
+    """
+    Input: user_ids with cuisine information
+    Output: returns user_ids and useful votes dictionary
+    """
+    user_useful = {}
+    with open(USERS_FILE) as uf:
+        for line in uf:
+            data = json.loads(line)
+            user_id = data['user_id']
+            if user_id in user_ids:
+                useful_votes = data['useful']
+                user_useful[user_id] = [str(useful_votes)]
+    return user_useful 
 
 def main():
     user_ids = unique_users_cuisine_info()
     print len(user_ids)
-    write_eval_data(user_ids, 0.8, 500)
-
+    write_eval_data(user_ids, 0.8)
+    #write_user_useful_votes(user_ids)
     # write_data_subset_files(user_ids)
+    # write_PSL_data_files(user_ids, 100)
     # write_PSL_data_files(user_ids, 100)
     # write_PSL_data_files(user_ids, len(user_ids))
     # save_users_with_fav_cuisine(user_ids)
