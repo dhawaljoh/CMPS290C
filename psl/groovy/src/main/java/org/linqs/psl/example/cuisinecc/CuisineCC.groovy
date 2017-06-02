@@ -22,7 +22,9 @@ import org.linqs.psl.utils.evaluation.printing.AtomPrintStream;
 import org.linqs.psl.utils.evaluation.printing.DefaultAtomPrintStream;
 import org.linqs.psl.utils.evaluation.statistics.ContinuousPredictionComparator;
 import org.linqs.psl.utils.evaluation.statistics.DiscretePredictionComparator;
+import org.linqs.psl.utils.evaluation.statistics.MulticlassPredictionComparator;
 import org.linqs.psl.utils.evaluation.statistics.DiscretePredictionStatistics;
+import org.linqs.psl.utils.evaluation.statistics.MulticlassPredictionStatistics;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,7 +44,7 @@ import java.nio.file.Paths;
 public class CuisineCC {
 	private static final String PARTITION_OBSERVATIONS = "observations";
 	private static final String PARTITION_TARGETS = "targets";
-	// private static final String PARTITION_TRUTH = "truth";
+	private static final String PARTITION_TRUTH = "truth";
 
 	private Logger log;
 	private DataStore ds;
@@ -142,7 +144,7 @@ public class CuisineCC {
 	/**
 	 * Loads the evidence, inference targets, and evaluation data into the DataStore
 	 */
-	private void loadData(Partition obsPartition, Partition targetsPartition) { //, Partition truthPartition) {
+	private void loadData(Partition obsPartition, Partition targetsPartition, Partition truthPartition) {
 		log.info("Loading data into database");
 
 		Inserter inserter = ds.getInserter(Friend, obsPartition);
@@ -154,8 +156,8 @@ public class CuisineCC {
 		inserter = ds.getInserter(favoriteCuisine, targetsPartition);
 		InserterUtils.loadDelimitedData(inserter, Paths.get(config.dataPath, "target.txt").toString());
 
-		// inserter = ds.getInserter(Lives, truthPartition);
-		// InserterUtils.loadDelimitedData(inserter, Paths.get(config.dataPath, "lives_truth.txt").toString());
+		inserter = ds.getInserter(favoriteCuisine, truthPartition);
+		InserterUtils.loadDelimitedData(inserter, Paths.get(config.dataPath, "truth.txt").toString());
 	}
 
 	/**
@@ -197,15 +199,27 @@ public class CuisineCC {
 	 * Evaluates the results of inference versus expected truth values
 	 */
 	private void evalResults(Partition targetsPartition, Partition truthPartition) {
-		Database resultsDB = ds.getDatabase(targetsPartition, [Lives] as Set);
-		Database truthDB = ds.getDatabase(truthPartition, [Lives] as Set);
-		DiscretePredictionComparator dpc = new DiscretePredictionComparator(resultsDB);
+		Database resultsDB = ds.getDatabase(targetsPartition, [favoriteCuisine] as Set);
+		Database truthDB = ds.getDatabase(truthPartition, [favoriteCuisine] as Set);
+		'''MulticlassPredictionComparator mpc = new MulticlassPredictionComparator(resultsDB);'''
+        DiscretePredictionComparator dpc = new DiscretePredictionComparator(resultsDB);
 		dpc.setBaseline(truthDB);
-		DiscretePredictionStatistics stats = dpc.compare(Lives);
-		log.info(
-				"Stats: precision {}, recall {}",
+        DiscretePredictionStatistics stats = dpc.compare(favoriteCuisine);
+		'''MulticlassPredictionStatistics stats = mpc.compare(favoriteCuisine);'''
+		'''log.info(
+        
+				"Stats: confusion matrix {}, recall {}, accuracy {}, F1 {}",
+				stats.getConfusionMatrix(),
+                stats.getAccuracy()
+        );'''
+        log.info(
+        
+				"Stats: precision {}, recall {}, accuracy {}, F1 {}",
 				stats.getPrecision(DiscretePredictionStatistics.BinaryClass.POSITIVE),
-				stats.getRecall(DiscretePredictionStatistics.BinaryClass.POSITIVE));
+				stats.getRecall(DiscretePredictionStatistics.BinaryClass.POSITIVE),
+                stats.getAccuracy(),
+                stats.getF1(DiscretePredictionStatistics.BinaryClass.POSITIVE)
+        );
 
 		resultsDB.close();
 		truthDB.close();
@@ -221,14 +235,14 @@ public class CuisineCC {
 
 		Partition obsPartition = ds.getPartition(PARTITION_OBSERVATIONS);
 		Partition targetsPartition = ds.getPartition(PARTITION_TARGETS);
-		// Partition truthPartition = ds.getPartition(PARTITION_TRUTH);
+		Partition truthPartition = ds.getPartition(PARTITION_TRUTH);
 
 		definePredicates();
 		defineRules();
-		loadData(obsPartition, targetsPartition); //, truthPartition);
+		loadData(obsPartition, targetsPartition, truthPartition);
 		runInference(obsPartition, targetsPartition);
 		writeOutput(targetsPartition);
-		// evalResults(targetsPartition, truthPartition);
+		evalResults(targetsPartition, truthPartition);
 
 		ds.close();
 	}
