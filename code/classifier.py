@@ -59,29 +59,34 @@ def load_input_features_cuisines(user_ids):
     Input: user_ids
     Output: feature vector: [[cuisines 1/0]]
     """
+    user_cuisine = cuisine_util.load_user_cuisine_list(user_ids)
+    # favorite cuisine and count for users
+    user_cuisine_count_sorted = cuisine_util.get_cuisine_count_sorted(user_cuisine) 
     feature_vector = []
     for user in user_ids:
         features = [0] * len(cuisine_util.CUISINE_CATEGORIES)
-        fav_cuisines = user_cuisine_count_sorted[user]
-        for cuisine in fav_cuisines:
-            cuisine_index = cuisine_util.CUISINE_CATEGORIES.index(cuisine[0])
-            cuisine_count = cuisine[1]
-            features[cuisine_index] = cuisine_count
-        feature_vector.append(features)
+        if user in user_cuisine_count_sorted:
+            fav_cuisines = user_cuisine_count_sorted[user]
+            for cuisine in fav_cuisines:
+                cuisine_index = cuisine_util.CUISINE_CATEGORIES.index(cuisine[0])
+                cuisine_count = cuisine[1]
+                features[cuisine_index] = cuisine_count
+            feature_vector.append(features)
     print feature_vector
     return feature_vector
 
 def classify(split_ratio):
     user_ids = cuisine_util.unique_users_cuisine_info()
     #user_cuisine = cuisine_util.load_user_cuisine_list(user_ids)
+    
+    # get the highest label in int format
+    labels = get_labels(user_ids)
 
     # create features
     #input_features = load_input_features_business_ids(user_ids)
     input_features = load_input_features_cuisines(user_ids)
 
-    # get the highest label in int format
-    labels = get_labels(user_ids)
- 
+     
     split_point = int(len(user_ids) * split_ratio)
 
     train_x, test_x = input_features[:split_point], input_features[split_point:]
