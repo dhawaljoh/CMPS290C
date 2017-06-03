@@ -1,6 +1,7 @@
 import json
 import os
 import pickle
+from collections import Counter
 
 VARSHA = 1
 
@@ -116,7 +117,6 @@ def load_user_cuisine_list(user_ids):
     Output: dictionary[userID] = [cuisine list]
     """
     user_cuisine = {}
-
     with open(FAVORITE_CUISINE_REVIEWS, "r") as inFile:
         for line in inFile:
             data = json.loads(line)
@@ -124,10 +124,57 @@ def load_user_cuisine_list(user_ids):
             if data["user_id"] in user_ids: #added to control number of users
                 if data["user_id"] in user_cuisine.keys():
                     user_cuisine[data["user_id"]] += cuisines
-            else:
-                user_cuisine[data["user_id"]] = cuisines
-        
+                else:
+                    user_cuisine[data["user_id"]] = cuisines
+    
     return user_cuisine
+
+def get_cuisine_count_sorted(user_cuisine):
+    """
+    Input: User cuisine dictionary from load_user_cuisine_list()
+    Output: User cuisine dictionary with count user_cuisine_count[user_id] = [(cuisine, count)]
+    """
+    user_cuisine_count = {}
+    for user, cuisine in user_cuisine.iteritems():
+        cuisine_count = Counter(cuisine).items()
+        cuisine_count.sort(key=lambda x: x[1], reverse=True)
+        user_cuisine_count[user] = cuisine_count
+
+    return user_cuisine_count
+
+def get_business_average_stars():
+    """
+    Output: returns average business rating for restaurants reviewed by user
+    """
+
+    # get businesses and star count
+
+    user_business = {}
+    with open(FAVORITE_CUISINE_REVIEWS, 'r') as fc:
+        for line in fc:
+            data = json.loads(line)
+            user_id = data['user_id']
+            stars = data['stars']
+            business_id = data['business_id']
+            if user_id not in user_business:
+                user_business[user_id] = {business_id: [stars, 1]}
+            else:
+                if business_id in user_business[user_id]:
+                    user_business[user_id][business_id][0] += stars
+                    user_business[user_id][business_id][1] += 1
+                else:
+                    user_business[user_id][business_id] = [stars, 1]
+
+    user_business_average = {}
+    for user, business_dict in user_business.iteritems():
+        # list of tuples
+        business_average = []
+        for business in business_dict:
+            average = business_dict[business][0]/float(business_dict[business][1])
+            business_average.append((business, average))
+        user_business_average[user] = business_average
+
+    return user_business_average
 
 def write_in_file(file_name, dictionary):
     """
