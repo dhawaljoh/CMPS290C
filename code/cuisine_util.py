@@ -360,7 +360,7 @@ def write_eval_data(user_ids, split_ratio, no_user=-1):
             pickle.dump(user_fans, open(USER_FANS, "w"))
 
     # ***********************************************************************
-    '''write_in_file(PSL_CUISINE_FILE, user_cuisine_labeled)
+    write_in_file(PSL_CUISINE_FILE, user_cuisine_labeled)
     write_in_file(PSL_TRUTH_FILE, user_cuisine_unlabeled)
     write_in_file(PSL_FRIENDS_FILE, user_friends)
     write_in_file(PSL_USER_USEFUL_FILE, user_useful)
@@ -378,7 +378,7 @@ def write_eval_data(user_ids, split_ratio, no_user=-1):
                         target_file.write(user + '\t' + cuisine + '\n')
                 else:
                     target_file.write(user + '\t' + cuisine + '\n')
-                influence_target_file.write(user + '\t' + cuisine + '\n')'''
+                influence_target_file.write(user + '\t' + cuisine + '\n')
 
 def get_votes(user_ids, attribute, minimum_votes=sys.maxint):
     """
