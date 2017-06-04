@@ -154,21 +154,21 @@ public class CuisineCC {
 
         model.add(
             /*funnyUser(P1,P2) is a stupid hack.*/
-			rule: ( Friend(P1,P2) & favoriteCuisine(P1,C) & funnyUser(P1,P1)) >> socialInfluenceOnCuisine(P2,C),
+			rule: ( Friend(P1,P2) & favoriteCuisine(P1,C) & funnyUser(P1,P1)) >> ~socialInfluenceOnCuisine(P2,C),
             squared: config.sqPotentials,
             weight: config.weightMap["favoriteCuisine"]
         );
         
         model.add(
             /*funnyUser(P1,P2) is a stupid hack.*/
-			rule: ( Friend(P1,P2) & favoriteCuisine(P1,C) & funnyUser(P1,P1)) >> socialInfluenceOnCuisine(P2,C),
+			rule: ( Friend(P2,P1) & favoriteCuisine(P1,C) & funnyUser(P1,P1)) >> ~socialInfluenceOnCuisine(P2,C),
             squared: config.sqPotentials,
             weight: config.weightMap["favoriteCuisine"]
         );
         
         model.add(
             /*fansUser(P1,P2) is a stupid hack.*/
-			rule: ( Friend(P2,P1) & favoriteCuisine(P1,C) & fansUser(P1,P1)) >> socialInfluenceOnCuisine(P2,C),
+			rule: ( Friend(P1,P2) & favoriteCuisine(P1,C) & fansUser(P1,P1)) >> socialInfluenceOnCuisine(P2,C),
             squared: config.sqPotentials,
             weight: config.weightMap["favoriteCuisine"]
         );
