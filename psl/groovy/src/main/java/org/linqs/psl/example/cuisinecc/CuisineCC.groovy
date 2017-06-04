@@ -119,21 +119,8 @@ public class CuisineCC {
 		);
         
         model.add(
-			rule: ( Friend(P2,P1) & favoriteCuisine(P1,C) ) >> socialInfluenceOnCuisine(P2,C),
-			squared: config.sqPotentials,
-			weight : config.weightMap["favoriteCuisine"]
-		);
-
-		model.add(
             /*usefulUser(P1,P2) is a stupid hack.*/
 			rule: ( Friend(P1,P2) & favoriteCuisine(P1,C) & usefulUser(P1,P1)) >> socialInfluenceOnCuisine(P2,C),
-            squared: config.sqPotentials,
-            weight: config.weightMap["favoriteCuisine"]
-        );
-        
-        model.add(
-            /*usefulUser(P1,P2) is a stupid hack.*/
-			rule: ( Friend(P2,P1) & favoriteCuisine(P1,C) & usefulUser(P1,P1)) >> socialInfluenceOnCuisine(P2,C),
             squared: config.sqPotentials,
             weight: config.weightMap["favoriteCuisine"]
         );
@@ -146,22 +133,8 @@ public class CuisineCC {
         );
         
         model.add(
-            /*coolUser(P1,P2) is a stupid hack.*/
-			rule: ( Friend(P2,P1) & favoriteCuisine(P1,C) & coolUser(P1,P1)) >> socialInfluenceOnCuisine(P2,C),
-            squared: config.sqPotentials,
-            weight: config.weightMap["favoriteCuisine"]
-        );
-
-        model.add(
             /*funnyUser(P1,P2) is a stupid hack.*/
 			rule: ( Friend(P1,P2) & favoriteCuisine(P1,C) & funnyUser(P1,P1)) >> ~socialInfluenceOnCuisine(P2,C),
-            squared: config.sqPotentials,
-            weight: config.weightMap["favoriteCuisine"]
-        );
-        
-        model.add(
-            /*funnyUser(P1,P2) is a stupid hack.*/
-			rule: ( Friend(P2,P1) & favoriteCuisine(P1,C) & funnyUser(P1,P1)) >> ~socialInfluenceOnCuisine(P2,C),
             squared: config.sqPotentials,
             weight: config.weightMap["favoriteCuisine"]
         );
@@ -174,13 +147,6 @@ public class CuisineCC {
         );
 
         model.add(
-            /*fansUser(P1,P2) is a stupid hack.*/
-			rule: ( Friend(P2,P1) & favoriteCuisine(P1,C) & fansUser(P1,P1)) >> socialInfluenceOnCuisine(P2,C),
-            squared: config.sqPotentials,
-            weight: config.weightMap["favoriteCuisine"]
-        );
-
-       model.add(
 			rule: ( socialInfluenceOnCuisine(P,C) ) >> favoriteCuisine(P,C),
 			squared: config.sqPotentials,
 			weight : config.weightMap["favoriteCuisine"]
@@ -193,27 +159,12 @@ public class CuisineCC {
         );
 
         model.add(
-            rule: ( socialInfluenceOnCuisine(P1,C) & Friend(P2, P1)) >> socialInfluenceOnCuisine(P2,C),
-            squared: config.sqPotentials,
-            weight : config.weightMap["favoriteCuisine"]
-        );
-
-        model.add(
              rule: "socialInfluenceOnCuisine(A, +B) = 1 ."
         );
         
         model.add(
              rule: "favoriteCuisine(A, +B) = 1 ."
         );
-
-
-		if (config.useFunctionalRule) {
-			model.add(
-				rule: Lives(P,L1) >> ~Lives(P,L2),
-				squared:config.sqPotentials,
-				weight: config.weightMap["Functional"]
-			);
-		}
 
 		model.add(
 			rule: ~favoriteCuisine(P,C),
