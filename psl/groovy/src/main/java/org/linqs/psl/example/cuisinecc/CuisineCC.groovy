@@ -103,7 +103,6 @@ public class CuisineCC {
         model.add predicate: "usefulUser", types: [ConstantType.UniqueID, ConstantType.UniqueID];
         model.add predicate: "coolUser", types: [ConstantType.UniqueID, ConstantType.UniqueID];
         model.add predicate: "funnyUser", types: [ConstantType.UniqueID, ConstantType.UniqueID];
-        model.add predicate: "fansUser", types: [ConstantType.UniqueID, ConstantType.UniqueID];
 	}
 
 	/**
@@ -139,13 +138,6 @@ public class CuisineCC {
             weight: config.weightMap["favoriteCuisine"]
         );
         
-        model.add(
-            /*fansUser(P1,P2) is a stupid hack.*/
-			rule: ( Friend(P1,P2) & favoriteCuisine(P1,C) & fansUser(P1,P1)) >> socialInfluenceOnCuisine(P2,C),
-            squared: config.sqPotentials,
-            weight: config.weightMap["favoriteCuisine"]
-        );
-
         model.add(
 			rule: ( socialInfluenceOnCuisine(P,C) ) >> favoriteCuisine(P,C),
 			squared: config.sqPotentials,
@@ -193,9 +185,6 @@ public class CuisineCC {
         inserter = ds.getInserter(funnyUser, obsPartition);
 		InserterUtils.loadDelimitedData(inserter, Paths.get(config.dataPath, "funny.txt").toString());
 
-        inserter = ds.getInserter(fansUser, obsPartition);
-		InserterUtils.loadDelimitedData(inserter, Paths.get(config.dataPath, "fans.txt").toString());
-
         inserter = ds.getInserter(favoriteCuisine, obsPartition);
 		InserterUtils.loadDelimitedData(inserter, Paths.get(config.dataPath, "cuisine.txt").toString());
 
@@ -216,7 +205,7 @@ public class CuisineCC {
 		log.info("Starting inference");
 
 		Date infStart = new Date();
-		HashSet closed = new HashSet<StandardPredicate>([Friend, usefulUser, coolUser, funnyUser, fansUser]);
+		HashSet closed = new HashSet<StandardPredicate>([Friend, usefulUser, coolUser, funnyUser]);
 		Database inferDB = ds.getDatabase(targetsPartition, closed, obsPartition);
 		MPEInference mpe = new MPEInference(model, inferDB, config.cb);
 		mpe.mpeInference();
