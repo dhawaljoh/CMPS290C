@@ -3,7 +3,7 @@ from sklearn.svm import SVC
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import accuracy_score
 from collections import Counter
-
+from sklearn.model_selection import cross_val_score
 
 user_cuisine_count_sorted ={}
 
@@ -72,8 +72,25 @@ def load_input_features_cuisines(user_ids):
                 cuisine_count = cuisine[1]
                 features[cuisine_index] = cuisine_count
             feature_vector.append(features)
-    print feature_vector
     return feature_vector
+
+# classifier with cross validation
+def classify():
+    user_ids = cuisine_util.unique_users_cuisine_info()
+    #user_cuisine = cuisine_util.load_user_cuisine_list(user_ids)
+
+    # get the highest label in int format
+    labels = get_labels(user_ids)
+
+    # create features
+    #input_features = load_input_features_business_ids(user_ids)
+    input_features = load_input_features_cuisines(user_ids) 
+    
+    # cross validation
+    model = SVC(probability=True, random_state=0)
+    scores = cross_val_score(model, input_features, labels, scoring='neg_log_loss')
+    print scores
+    return scores
 
 def classify(split_ratio):
     user_ids = cuisine_util.unique_users_cuisine_info()
@@ -83,10 +100,11 @@ def classify(split_ratio):
     labels = get_labels(user_ids)
 
     # create features
-    #input_features = load_input_features_business_ids(user_ids)
-    input_features = load_input_features_cuisines(user_ids)
+    input_features_businesses = load_input_features_business_ids(user_ids)
+    input_features_cuisines = load_input_features_cuisines(user_ids)
+    
+    input_features = [a + b for a, b in zip(input_features_businesses, input_features_cuisines)]
 
-     
     split_point = int(len(user_ids) * split_ratio)
 
     train_x, test_x = input_features[:split_point], input_features[split_point:]
@@ -106,7 +124,6 @@ def classify(split_ratio):
     print "no of -1: ", Counter(labels)
 
     return conf_matrix, accuracy
-
 
 def main():
     classify(0.8)

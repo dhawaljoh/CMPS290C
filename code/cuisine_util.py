@@ -2,6 +2,8 @@ import json
 import os
 import pickle
 from collections import Counter
+import subprocess
+import sys
 
 VARSHA = 1
 
@@ -22,12 +24,27 @@ PSL_PATH = os.path.join("..", "psl", "data")
 REVIEWS_FILE = os.path.join(DATA_PATH, "yelp_academic_dataset_review.json")
 USERS_FILE = os.path.join(DATA_PATH, "yelp_academic_dataset_user.json")
 FAVORITE_CUISINE_REVIEWS = os.path.join(YELP_PATH, "fav_cuisine_reviews.json")
+
+# pickle files
 USER_IDS_WITH_CUISINE = os.path.join(YELP_PATH, "user_ids_with_cuisine_friends")
 
-PSL_FRIENDS_FILE = os.path.join(PSL_PATH, "friends.txt")
+USER_USEFUL = os.path.join(YELP_PATH, "user_useful_votes")
+USER_FUNNY = os.path.join(YELP_PATH, "user_funny_votes")
+USER_COOL = os.path.join(YELP_PATH, "user_cool_votes")
+USER_FANS = os.path.join(YELP_PATH, "user_fans_votes")
+
+EVAL_USER_FRIENDS = os.path.join(YELP_PATH, "eval_user_friends")
+EVAL_USER_LABELED_CUISINE = os.path.join(YELP_PATH, "eval_user_labeled_cuisine")
+EVAL_USER_UNLABELED_CUISINE = os.path.join(YELP_PATH, "eval_user_unlabeled_cuisine")
+
 PSL_USER_USEFUL_FILE = os.path.join(PSL_PATH, "useful.txt")
+PSL_USER_COOL_FILE = os.path.join(PSL_PATH, "cool.txt")
+PSL_USER_FUNNY_FILE = os.path.join(PSL_PATH, "funny.txt")
+PSL_USER_FANS_FILE = os.path.join(PSL_PATH, "fans.txt")
+PSL_FRIENDS_FILE = os.path.join(PSL_PATH, "friends.txt")
 PSL_CUISINE_FILE = os.path.join(PSL_PATH, "cuisine.txt")
-PSL_TARGET_FILE = os.path.join(PSL_PATH, "target.txt")
+PSL_FAVORITE_CUISINE_TARGET_FILE = os.path.join(PSL_PATH, "favoriteCuisineTarget.txt")
+PSL_SOCIAL_INFLUENCE_TARGET_FILE = os.path.join(PSL_PATH, "socialInfluenceTarget.txt")
 PSL_TRUTH_FILE = os.path.join(PSL_PATH, "truth.txt")
 def common_friends_with_cuisine(user_ids):
     """
@@ -70,7 +87,7 @@ def unique_users_cuisine_info():
     Returns: Unique user_ids with favourite cuisines and at least 1 friend
     """
     
-    if os.path.isfile(USER_IDS_WITH_CUISINE):
+    if os.path.exists(USER_IDS_WITH_CUISINE):
         user_ids = pickle.load(open(USER_IDS_WITH_CUISINE))
     else:
         user_ids = []
@@ -207,15 +224,18 @@ def write_PSL_data_files(orig_user_ids, no_users):
     target_users = list(set(user_friends.keys()) | set(user_cuisine.keys()) | set(all_people))
     
     # write target file
-    with open(PSL_TARGET_FILE, "w") as target_file:
+    with open(PSL_FAVORITE_CUISINE_TARGET_FILE, "w") as target_file, \
+        open(PSL_SOCIAL_INFLUENCE_TARGET_FILE, "w") as influence_target_file:
         for user in target_users:
             for cuisine in CUISINE_CATEGORIES:
                 if user in user_cuisine.keys():
                     if cuisine not in user_cuisine[user]: # to remove observed entries from target file
                         target_file.write(user + "\t" + cuisine + "\n")
                 else:
-                    target_file.write(user + "\t" + cuisine + "\n")	
+                    target_file.write(user + "\t" + cuisine + "\n")
+                influence_target_file.write(user + "\t" + cuisine + "\n")
 
+    
 def write_data_subset_files(user_ids):
     # get users from outside the network linked to the network
     no_users = 10
@@ -250,14 +270,16 @@ def write_data_subset_files(user_ids):
     target_users = list(set(user_friends.keys()) | set(user_cuisine.keys()) | set(all_people))
     print 'Number of users', len(target_users)
 	# write target file
-    with open(PSL_TARGET_FILE, "w") as target_file:
+    with open(PSL_FAVORITE_CUISINE_TARGET_FILE, "w") as target_file, \
+        open(PSL_SOCIAL_INFLUENCE_TARGET_FILE, "w") as influence_target_file:
         for user in target_users:
             for cuisine in CUISINE_CATEGORIES:
                 if user in user_cuisine.keys():
                     if cuisine not in user_cuisine[user]:
                         target_file.write(user + "\t" + cuisine + "\n")
-                    else:
-                        target_file.write(user + "\t" + cuisine + "\n")
+                else:
+                    target_file.write(user + "\t" + cuisine + "\n")
+                influence_target_file.write(user + "\t" + cuisine + "\n")
 
 # Function to write evaluation data
 def write_eval_data(user_ids, split_ratio, no_user=-1):
@@ -265,18 +287,21 @@ def write_eval_data(user_ids, split_ratio, no_user=-1):
     Input: User_ids with cuisine info and no of users to restrict size of data
     Outputs: Writes data for PSL evaluation
     """
-    if no_user == -1:
-        no_user = len(user_ids)
-
-    # take only subset of user_ids
-    user_ids = user_ids[:no_user]
+    if no_user != -1:
+        # take only subset of user_ids
+        user_ids = user_ids[:no_user]
     
-    user_friends = load_user_friends_list(user_ids, within_cuisine_network=True)
+    if no_user == -1 and os.path.exists(EVAL_USER_FRIENDS):
+        user_friends = pickle.load(open(EVAL_USER_FRIENDS))
+    else:
+        user_friends = load_user_friends_list(user_ids, within_cuisine_network=True)
+        if no_user == -1:
+            pickle.dump(user_friends, open(EVAL_USER_FRIENDS, "w"))
+
    
     # users with at least one friend 
     user_ids = user_friends.keys()
     
-    user_useful = get_user_useful_votes(user_ids)
     split_point = int(len(user_ids) * split_ratio)
     
     # sort users according to number of friends
@@ -289,16 +314,63 @@ def write_eval_data(user_ids, split_ratio, no_user=-1):
     user_ids_unlabeled = sorted_user_ids[split_point:]
     
     # get favorite cuisine info for labeled uers
-    user_cuisine_labeled = load_user_cuisine_list(user_ids_labeled)
-    user_cuisine_unlabeled = load_user_cuisine_list(user_ids_unlabeled)
 
-    write_in_file(PSL_CUISINE_FILE, user_cuisine_labeled)
+    if no_user == -1 and os.path.exists(EVAL_USER_LABELED_CUISINE):
+        user_cuisine_labeled = pickle.load(open(EVAL_USER_LABELED_CUISINE))
+        user_cuisine_unlabeled = pickle.load(open(EVAL_USER_UNLABELED_CUISINE)) 
+    else:
+        user_cuisine_labeled = load_user_cuisine_list(user_ids_labeled)
+        user_cuisine_unlabeled = load_user_cuisine_list(user_ids_unlabeled)
+        if no_user == -1:
+            pickle.dump(user_cuisine_labeled, open(EVAL_USER_LABELED_CUISINE, "w"))
+            pickle.dump(user_cuisine_unlabeled, open(EVAL_USER_UNLABELED_CUISINE, "w"))
+
+    # ***********************************************************************
+    # load attributes: useful, friendly, cool, funny
+    if no_user == -1 and os.path.exists(USER_USEFUL):
+        user_useful = pickle.load(open(USER_USEFUL))
+    else:
+        user_useful = get_votes(user_ids, "useful", minimum_votes=25)
+        if no_user == -1:
+            print "dumping in pickle file"
+            pickle.dump(user_useful, open(USER_USEFUL, "w"))
+    
+    if no_user == -1 and os.path.exists(USER_FUNNY):
+        user_funny = pickle.load(open(USER_FUNNY))
+    else:
+        user_funny = get_votes(user_ids, "funny", minimum_votes=15)
+        if no_user == -1:
+            print "dumping in pickle file"
+            pickle.dump(user_funny, open(USER_FUNNY, "w"))
+
+    if no_user == -1 and os.path.exists(USER_COOL):
+        user_cool = pickle.load(open(USER_COOL))
+    else:
+        user_cool = get_votes(user_ids, "cool", minimum_votes=21)
+        if no_user == -1:
+            print "dumping in pickle file"
+            pickle.dump(user_cool, open(USER_COOL, "w"))
+    
+    if no_user == -1 and os.path.exists(USER_FANS):
+        user_fans = pickle.load(open(USER_FANS))
+    else:
+        user_fans = get_votes(user_ids, "fans", minimum_votes=1)
+        if no_user == -1:
+            print "dumping in pickle file"
+            pickle.dump(user_fans, open(USER_FANS, "w"))
+
+    # ***********************************************************************
+    '''write_in_file(PSL_CUISINE_FILE, user_cuisine_labeled)
     write_in_file(PSL_TRUTH_FILE, user_cuisine_unlabeled)
     write_in_file(PSL_FRIENDS_FILE, user_friends)
     write_in_file(PSL_USER_USEFUL_FILE, user_useful)
+    write_in_file(PSL_USER_COOL_FILE, user_cool)
+    write_in_file(PSL_USER_FUNNY_FILE, user_funny)
+    write_in_file(PSL_USER_FANS_FILE, user_fans)
 
     # write target file
-    with open(PSL_TARGET_FILE, 'w') as target_file:
+    with open(PSL_FAVORITE_CUISINE_TARGET_FILE, 'w') as target_file, \
+        open(PSL_SOCIAL_INFLUENCE_TARGET_FILE, "w") as influence_target_file:
         for user in user_ids:
             for cuisine in CUISINE_CATEGORIES:
                 if user in user_cuisine_labeled.keys():
@@ -306,11 +378,12 @@ def write_eval_data(user_ids, split_ratio, no_user=-1):
                         target_file.write(user + '\t' + cuisine + '\n')
                 else:
                     target_file.write(user + '\t' + cuisine + '\n')
+                influence_target_file.write(user + '\t' + cuisine + '\n')'''
 
-def get_user_useful_votes(user_ids):
+def get_votes(user_ids, attribute, minimum_votes=sys.maxint):
     """
-    Input: user_ids with cuisine information
-    Output: returns user_ids and useful votes dictionary
+    Input: user_ids with cuisine information, attribute to be retrived from json file and minimum no of votes to be written
+    Output: returns user_ids and attribute votes dictionary
     """
     user_useful = {}
     with open(USERS_FILE) as uf:
@@ -318,15 +391,15 @@ def get_user_useful_votes(user_ids):
             data = json.loads(line)
             user_id = data['user_id']
             if user_id in user_ids:
-                useful_votes = data['useful']
-                user_useful[user_id] = [str(useful_votes)]
+                useful_votes = data[attribute]
+                if useful_votes > minimum_votes:
+                    user_useful[user_id] = [user_id]
     return user_useful 
 
 def main():
     user_ids = unique_users_cuisine_info()
     print len(user_ids)
     write_eval_data(user_ids, 0.8)
-    #write_user_useful_votes(user_ids)
     # write_data_subset_files(user_ids)
     # write_PSL_data_files(user_ids, 100)
     # write_PSL_data_files(user_ids, 100)

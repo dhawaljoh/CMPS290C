@@ -98,6 +98,12 @@ public class CuisineCC {
 	private void definePredicates() {
 		model.add predicate: "Friend", types: [ConstantType.UniqueID, ConstantType.UniqueID];
 		model.add predicate: "favoriteCuisine", types: [ConstantType.UniqueID, ConstantType.UniqueID];
+		model.add predicate: "socialInfluenceOnCuisine", types: [ConstantType.UniqueID, ConstantType.UniqueID];
+		
+        model.add predicate: "usefulUser", types: [ConstantType.UniqueID, ConstantType.UniqueID];
+        model.add predicate: "coolUser", types: [ConstantType.UniqueID, ConstantType.UniqueID];
+        model.add predicate: "funnyUser", types: [ConstantType.UniqueID, ConstantType.UniqueID];
+        model.add predicate: "fansUser", types: [ConstantType.UniqueID, ConstantType.UniqueID];
 	}
 
 	/**
@@ -107,21 +113,98 @@ public class CuisineCC {
 		log.info("Defining model rules");
 
 		model.add(
-			rule: ( Friend(P1,P2) & favoriteCuisine(P1,C) ) >> favoriteCuisine(P2,C),
+			rule: ( Friend(P1,P2) & favoriteCuisine(P1,C) ) >> socialInfluenceOnCuisine(P2,C),
+			squared: config.sqPotentials,
+			weight : config.weightMap["favoriteCuisine"]
+		);
+        
+        model.add(
+			rule: ( Friend(P2,P1) & favoriteCuisine(P1,C) ) >> socialInfluenceOnCuisine(P2,C),
 			squared: config.sqPotentials,
 			weight : config.weightMap["favoriteCuisine"]
 		);
 
 		model.add(
-			rule: ( Friend(P2,P1) & favoriteCuisine(P1,C) ) >> favoriteCuisine(P2,C),
+            /*usefulUser(P1,P2) is a stupid hack.*/
+			rule: ( Friend(P1,P2) & favoriteCuisine(P1,C) & usefulUser(P1,P1)) >> socialInfluenceOnCuisine(P2,C),
+            squared: config.sqPotentials,
+            weight: config.weightMap["favoriteCuisine"]
+        );
+        
+        model.add(
+            /*usefulUser(P1,P2) is a stupid hack.*/
+			rule: ( Friend(P2,P1) & favoriteCuisine(P1,C) & usefulUser(P1,P1)) >> socialInfluenceOnCuisine(P2,C),
+            squared: config.sqPotentials,
+            weight: config.weightMap["favoriteCuisine"]
+        );
+        
+        model.add(
+            /*coolUser(P1,P2) is a stupid hack.*/
+			rule: ( Friend(P1,P2) & favoriteCuisine(P1,C) & coolUser(P1,P1)) >> socialInfluenceOnCuisine(P2,C),
+            squared: config.sqPotentials,
+            weight: config.weightMap["favoriteCuisine"]
+        );
+        
+        model.add(
+            /*coolUser(P1,P2) is a stupid hack.*/
+			rule: ( Friend(P2,P1) & favoriteCuisine(P1,C) & coolUser(P1,P1)) >> socialInfluenceOnCuisine(P2,C),
+            squared: config.sqPotentials,
+            weight: config.weightMap["favoriteCuisine"]
+        );
+
+        model.add(
+            /*funnyUser(P1,P2) is a stupid hack.*/
+			rule: ( Friend(P1,P2) & favoriteCuisine(P1,C) & funnyUser(P1,P1)) >> socialInfluenceOnCuisine(P2,C),
+            squared: config.sqPotentials,
+            weight: config.weightMap["favoriteCuisine"]
+        );
+        
+        model.add(
+            /*funnyUser(P1,P2) is a stupid hack.*/
+			rule: ( Friend(P1,P2) & favoriteCuisine(P1,C) & funnyUser(P1,P1)) >> socialInfluenceOnCuisine(P2,C),
+            squared: config.sqPotentials,
+            weight: config.weightMap["favoriteCuisine"]
+        );
+        
+        model.add(
+            /*fansUser(P1,P2) is a stupid hack.*/
+			rule: ( Friend(P2,P1) & favoriteCuisine(P1,C) & fansUser(P1,P1)) >> socialInfluenceOnCuisine(P2,C),
+            squared: config.sqPotentials,
+            weight: config.weightMap["favoriteCuisine"]
+        );
+
+        model.add(
+            /*fansUser(P1,P2) is a stupid hack.*/
+			rule: ( Friend(P2,P1) & favoriteCuisine(P1,C) & fansUser(P1,P1)) >> socialInfluenceOnCuisine(P2,C),
+            squared: config.sqPotentials,
+            weight: config.weightMap["favoriteCuisine"]
+        );
+
+       model.add(
+			rule: ( socialInfluenceOnCuisine(P,C) ) >> favoriteCuisine(P,C),
 			squared: config.sqPotentials,
 			weight : config.weightMap["favoriteCuisine"]
 		);
 
-		//////////////////////QUESTION////////////////////////////////
-		// What happens when a person likes more than one cuisine and no functional rule is specified?
-		// favoriteCuisine(P,C)?
-		//////////////////////////////////////////////////////////////
+        model.add(
+            rule: ( socialInfluenceOnCuisine(P1,C) & Friend(P1, P2)) >> socialInfluenceOnCuisine(P2,C),
+            squared: config.sqPotentials,
+            weight : config.weightMap["favoriteCuisine"]
+        );
+
+        model.add(
+            rule: ( socialInfluenceOnCuisine(P1,C) & Friend(P2, P1)) >> socialInfluenceOnCuisine(P2,C),
+            squared: config.sqPotentials,
+            weight : config.weightMap["favoriteCuisine"]
+        );
+
+        model.add(
+             rule: "socialInfluenceOnCuisine(A, +B) = 1 ."
+        );
+        
+        model.add(
+             rule: "favoriteCuisine(A, +B) = 1 ."
+        );
 
 
 		if (config.useFunctionalRule) {
@@ -150,11 +233,26 @@ public class CuisineCC {
 		Inserter inserter = ds.getInserter(Friend, obsPartition);
 		InserterUtils.loadDelimitedData(inserter, Paths.get(config.dataPath, "friends.txt").toString());
 
-		inserter = ds.getInserter(favoriteCuisine, obsPartition);
+		inserter = ds.getInserter(usefulUser, obsPartition);
+		InserterUtils.loadDelimitedData(inserter, Paths.get(config.dataPath, "useful.txt").toString());
+
+		inserter = ds.getInserter(coolUser, obsPartition);
+		InserterUtils.loadDelimitedData(inserter, Paths.get(config.dataPath, "cool.txt").toString());
+
+        inserter = ds.getInserter(funnyUser, obsPartition);
+		InserterUtils.loadDelimitedData(inserter, Paths.get(config.dataPath, "funny.txt").toString());
+
+        inserter = ds.getInserter(fansUser, obsPartition);
+		InserterUtils.loadDelimitedData(inserter, Paths.get(config.dataPath, "fans.txt").toString());
+
+        inserter = ds.getInserter(favoriteCuisine, obsPartition);
 		InserterUtils.loadDelimitedData(inserter, Paths.get(config.dataPath, "cuisine.txt").toString());
 
-		inserter = ds.getInserter(favoriteCuisine, targetsPartition);
-		InserterUtils.loadDelimitedData(inserter, Paths.get(config.dataPath, "target.txt").toString());
+        inserter = ds.getInserter(favoriteCuisine, targetsPartition);
+		InserterUtils.loadDelimitedData(inserter, Paths.get(config.dataPath, "favoriteCuisineTarget.txt").toString());
+
+        inserter = ds.getInserter(socialInfluenceOnCuisine, targetsPartition);
+		InserterUtils.loadDelimitedData(inserter, Paths.get(config.dataPath, "socialInfluenceTarget.txt").toString());
 
 		inserter = ds.getInserter(favoriteCuisine, truthPartition);
 		InserterUtils.loadDelimitedData(inserter, Paths.get(config.dataPath, "truth.txt").toString());
@@ -167,7 +265,7 @@ public class CuisineCC {
 		log.info("Starting inference");
 
 		Date infStart = new Date();
-		HashSet closed = new HashSet<StandardPredicate>([Friend]);
+		HashSet closed = new HashSet<StandardPredicate>([Friend, usefulUser, coolUser, funnyUser, fansUser]);
 		Database inferDB = ds.getDatabase(targetsPartition, closed, obsPartition);
 		MPEInference mpe = new MPEInference(model, inferDB, config.cb);
 		mpe.mpeInference();
@@ -189,10 +287,18 @@ public class CuisineCC {
 		for (Atom a : atomSet) {
 			aps.printAtom(a);
 		}
-
-		aps.close();
+        aps.close();
 		ps.close();
-		resultsDB.close();
+		
+        ps = new PrintStream(new File(Paths.get(config.outputPath, "socialInfluence.txt").toString()));
+		aps = new DefaultAtomPrintStream(ps);
+		atomSet = Queries.getAllAtoms(resultsDB, socialInfluenceOnCuisine);
+		for (Atom a : atomSet) {
+			aps.printAtom(a);
+		}
+        aps.close();
+        ps.close();
+        resultsDB.close();
 	}
 
 	/**
