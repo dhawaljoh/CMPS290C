@@ -399,7 +399,7 @@ def get_votes(user_ids, attribute, minimum_votes=sys.maxint):
 def main():
     user_ids = unique_users_cuisine_info()
     print len(user_ids)
-    write_eval_data(user_ids, 0.8)
+    write_eval_data(user_ids, 0.8, no_user=5000)
     # write_data_subset_files(user_ids)
     # write_PSL_data_files(user_ids, 100)
     # write_PSL_data_files(user_ids, 100)
